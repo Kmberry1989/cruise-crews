@@ -1,0 +1,46 @@
+{
+  "version": "0.4.0",
+  "notes": "Add real .glb/.gltf models and PNG/SVG GUI assets here. Keep ids stable; the game uses ids for unlocks and equipped cosmetics.",
+  "models": {
+    "players": [
+      { "id": "player-default", "name": "Default Crew Toy", "src": "", "thumbnail": "", "status": "placeholder" },
+      { "id": "player-captain", "name": "Captain Variant", "src": "assets/models/players/player-captain.glb", "thumbnail": "", "status": "drop-your-model" }
+    ],
+    "pirates": [
+      { "id": "pirate-default", "name": "Pirate Toy Enemy", "src": "assets/models/pirates/pirate-default.glb", "thumbnail": "", "status": "drop-your-model" }
+    ],
+    "boats": [
+      { "id": "boat-glossy-sloop", "name": "Glossy Sloop", "src": "assets/models/boats/boat-glossy-sloop.glb", "thumbnail": "", "status": "drop-your-model" },
+      { "id": "boat-pirate-brown", "name": "Brown Pirate Ship", "src": "assets/models/boats/boat-pirate-brown.glb", "thumbnail": "", "status": "drop-your-model" }
+    ],
+    "islands": [
+      { "id": "island-berry-cove", "name": "Berry Cove Island", "src": "assets/models/islands/island-berry-cove.glb", "thumbnail": "", "status": "drop-your-model" }
+    ],
+    "environments": [
+      { "id": "env-sky-cockpit", "name": "Sky Cockpit Environment", "src": "assets/models/environments/env-sky-cockpit.glb", "thumbnail": "", "status": "drop-your-model" }
+    ],
+    "steeringWheels": [
+      { "id": "wheel-classic", "name": "Classic Toy Wheel", "src": "", "thumbnail": "", "unlockAtManualPages": 0 },
+      { "id": "wheel-brass", "name": "Royal Brass Wheel", "src": "assets/models/steering-wheels/wheel-brass.glb", "thumbnail": "", "unlockAtManualPages": 1 },
+      { "id": "wheel-pirate", "name": "Pirate Bone Wheel", "src": "assets/models/steering-wheels/wheel-pirate.glb", "thumbnail": "", "unlockAtManualPages": 3 }
+    ],
+    "seats": [
+      { "id": "seat-navy", "name": "Navy Captain Chair", "src": "", "thumbnail": "", "unlockAtManualPages": 0 },
+      { "id": "seat-cream", "name": "Cloud Cream Chair", "src": "assets/models/seats/seat-cream.glb", "thumbnail": "", "unlockAtManualPages": 2 },
+      { "id": "seat-pirate", "name": "Pirate Red Chair", "src": "assets/models/seats/seat-pirate.glb", "thumbnail": "", "unlockAtManualPages": 4 }
+    ]
+  },
+  "gui": {
+    "coin": "assets/gui/coin.svg",
+    "pearl": "assets/gui/pearl.svg",
+    "gem": "assets/gui/gem.svg",
+    "berry": "assets/gui/berry.svg",
+    "pirateFlag": "assets/gui/pirate-flag.svg",
+    "radioWave": "assets/gui/radio-wave.svg"
+  },
+  "minigames": {
+    "wordTileFrame": "assets/minigames/word/word-tile-frame.svg",
+    "liquidTube": "assets/minigames/maintenance/liquid-tube.svg",
+    "treasureX": "assets/minigames/treasure/treasure-x.svg"
+  }
+}

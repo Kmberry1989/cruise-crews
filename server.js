@@ -108,6 +108,55 @@ const TREASURE_ROUNDS = [
   },
 ];
 
+
+const COSMETIC_UNLOCKS = [
+  { manualPage: 0, category: "steeringWheels", id: "wheel-classic", name: "Classic Toy Wheel" },
+  { manualPage: 0, category: "seats", id: "seat-navy", name: "Navy Captain Chair" },
+  { manualPage: 1, category: "steeringWheels", id: "wheel-brass", name: "Royal Brass Wheel" },
+  { manualPage: 2, category: "seats", id: "seat-cream", name: "Cloud Cream Chair" },
+  { manualPage: 3, category: "steeringWheels", id: "wheel-pirate", name: "Pirate Bone Wheel" },
+  { manualPage: 4, category: "seats", id: "seat-pirate", name: "Pirate Red Chair" },
+  { manualPage: 5, category: "boats", id: "boat-pirate-brown", name: "Brown Pirate Ship" },
+  { manualPage: 6, category: "islands", id: "island-berry-cove", name: "Berry Cove Island" },
+];
+
+function makeCosmeticState() {
+  return {
+    unlocked: {
+      steeringWheels: ["wheel-classic"],
+      seats: ["seat-navy"],
+      playerModels: ["player-default"],
+      boats: ["boat-glossy-sloop"],
+      pirates: [],
+      islands: [],
+      environments: ["env-sky-cockpit"],
+      gui: ["coin", "pearl", "gem", "berry", "pirateFlag", "radioWave"],
+    },
+    equipped: {
+      steeringWheel: "wheel-classic",
+      captainSeat: "seat-navy",
+      engineerSeat: "seat-navy",
+      playerModel: "player-default",
+      boat: "boat-glossy-sloop",
+      environment: "env-sky-cockpit",
+    },
+    recentlyUnlocked: [],
+  };
+}
+
+function unlockCosmeticsForPage(room, pageNumber) {
+  const unlockedNow = [];
+  for (const unlock of COSMETIC_UNLOCKS.filter((item) => item.manualPage === pageNumber)) {
+    const bucket = room.cosmetics.unlocked[unlock.category];
+    if (bucket && !bucket.includes(unlock.id)) {
+      bucket.push(unlock.id);
+      unlockedNow.push(unlock);
+    }
+  }
+  room.cosmetics.recentlyUnlocked = unlockedNow;
+  return unlockedNow;
+}
+
 const SWITCHES = [
   "nav", "radio", "pump", "fuel", "lights", "gps", "manual", "defense", "aux-a", "aux-b", "aux-c", "aux-d",
 ].map((id, index) => ({ id, name: "", on: index % 3 !== 0, alert: index < 8 }));
@@ -187,6 +236,7 @@ function makeRoom(name) {
     tasks: { captain: pickTask("captain"), engineer: pickTask("engineer") },
     event: null,
     treasureHunt: null,
+    cosmetics: makeCosmeticState(),
     reveal: null,
     lastSuccess: null,
     log: [makeLog("Room created. Claim seats, then start the voyage.")],
@@ -232,6 +282,8 @@ function advanceMissionIfReady(room) {
   room.stats.treasure = clamp(room.stats.treasure + 10);
   room.stats.morale = clamp(room.stats.morale + 7);
 
+  const cosmeticUnlocks = unlockCosmeticsForPage(room, room.stats.manualPages);
+
   room.reveal = {
     id: crypto.randomUUID(),
     type: "manual",
@@ -239,6 +291,7 @@ function advanceMissionIfReady(room) {
     title: stage.rewardTitle,
     body: stage.rewardBody,
     clue: stage.clue,
+    unlocks: cosmeticUnlocks,
   };
 
   room.lastSuccess = {
@@ -400,6 +453,28 @@ function completeTask(room, playerId, role, result = {}) {
   return { ok: true };
 }
 
+function equipCosmetic(room, player, payload = {}) {
+  const category = String(payload.category || "");
+  const id = String(payload.id || "");
+  const target = String(payload.target || "");
+  const allowedCategories = ["steeringWheels", "seats", "playerModels", "boats", "islands", "environments"];
+  if (!allowedCategories.includes(category)) return { ok: false, error: "Unknown cosmetic category." };
+  if (!room.cosmetics.unlocked[category]?.includes(id)) return { ok: false, error: "That cosmetic is still locked." };
+
+  if (category === "steeringWheels") room.cosmetics.equipped.steeringWheel = id;
+  if (category === "seats") {
+    if (target === "engineer") room.cosmetics.equipped.engineerSeat = id;
+    else room.cosmetics.equipped.captainSeat = id;
+  }
+  if (category === "playerModels") room.cosmetics.equipped.playerModel = id;
+  if (category === "boats") room.cosmetics.equipped.boat = id;
+  if (category === "environments") room.cosmetics.equipped.environment = id;
+
+  room.lastSuccess = { id: crypto.randomUUID(), at: Date.now(), text: `${player.name} equipped ${id}.` };
+  addLog(room, `${player.name} equipped ${id}.`);
+  return { ok: true };
+}
+
 function handleAction(room, playerId, type, payload = {}) {
   const player = room.players[playerId];
   if (!["event:clear", "reveal:clear", "treasure:clear"].includes(type) && !player) return { ok: false, error: "Player not found." };
@@ -447,6 +522,8 @@ function handleAction(room, playerId, type, payload = {}) {
     addLog(room, `${player.name} toggled a cockpit breaker ${item.on ? "on" : "off"}.`);
     return { ok: true };
   }
+
+  if (type === "cosmetic:equip") return equipCosmetic(room, player, payload);
 
   if (type === "task:complete") return completeTask(room, playerId, payload.role, payload.result);
 
@@ -520,7 +597,7 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
-    if (req.method === "GET" && url.pathname === "/health") return sendJson(res, 200, { ok: true, version: "0.3.0" });
+    if (req.method === "GET" && url.pathname === "/health") return sendJson(res, 200, { ok: true, version: "0.4.0" });
 
     if (req.method === "POST" && url.pathname === "/api/create") {
       const body = await readJson(req);
@@ -589,5 +666,5 @@ setInterval(() => {
 }, 9000);
 
 server.listen(PORT, () => {
-  console.log(`Treasure Crew Co-op v0.3 running at http://localhost:${PORT}`);
+  console.log(`Treasure Crew Co-op v0.4 running at http://localhost:${PORT}`);
 });

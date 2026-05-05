@@ -22,13 +22,43 @@ const LIQUID_START = [["sun", "sea", "rose", "sun"], ["sea", "rose", "mint", "mi
 const MATCHING_ICONS = ["⚓", "🧭", "🔧", "💡"];
 const MANUAL_SECTIONS = ["Emergency Startup", "Navigation Glossary", "Treasure Protocol", "Pirate Defense", "Storm Calls", "Secret Upgrades"];
 
+
+const FALLBACK_ASSET_MANIFEST = {
+  models: {
+    players: [{ id: "player-default", name: "Default Crew Toy", src: "" }],
+    pirates: [{ id: "pirate-default", name: "Pirate Toy Enemy", src: "assets/models/pirates/pirate-default.glb" }],
+    boats: [{ id: "boat-glossy-sloop", name: "Glossy Sloop", src: "assets/models/boats/boat-glossy-sloop.glb" }],
+    islands: [{ id: "island-berry-cove", name: "Berry Cove Island", src: "assets/models/islands/island-berry-cove.glb" }],
+    environments: [{ id: "env-sky-cockpit", name: "Sky Cockpit Environment", src: "assets/models/environments/env-sky-cockpit.glb" }],
+    steeringWheels: [
+      { id: "wheel-classic", name: "Classic Toy Wheel", src: "", unlockAtManualPages: 0 },
+      { id: "wheel-brass", name: "Royal Brass Wheel", src: "assets/models/steering-wheels/wheel-brass.glb", unlockAtManualPages: 1 },
+      { id: "wheel-pirate", name: "Pirate Bone Wheel", src: "assets/models/steering-wheels/wheel-pirate.glb", unlockAtManualPages: 3 },
+    ],
+    seats: [
+      { id: "seat-navy", name: "Navy Captain Chair", src: "", unlockAtManualPages: 0 },
+      { id: "seat-cream", name: "Cloud Cream Chair", src: "assets/models/seats/seat-cream.glb", unlockAtManualPages: 2 },
+      { id: "seat-pirate", name: "Pirate Red Chair", src: "assets/models/seats/seat-pirate.glb", unlockAtManualPages: 4 },
+    ],
+  },
+  gui: {
+    coin: "assets/gui/coin.svg",
+    pearl: "assets/gui/pearl.svg",
+    gem: "assets/gui/gem.svg",
+    berry: "assets/gui/berry.svg",
+    pirateFlag: "assets/gui/pirate-flag.svg",
+    radioWave: "assets/gui/radio-wave.svg",
+  },
+};
+
 const state = {
   room: null,
-  playerId: localStorage.getItem("tcV03PlayerId") || "",
-  code: localStorage.getItem("tcV03RoomCode") || "",
+  playerId: localStorage.getItem("tcV04PlayerId") || "",
+  code: localStorage.getItem("tcV04RoomCode") || "",
   name: localStorage.getItem("tcCrewName") || "",
   stream: null,
   error: "",
+  assetManifest: FALLBACK_ASSET_MANIFEST,
 };
 
 function html(strings, ...values) {
@@ -55,6 +85,41 @@ async function api(path, payload) {
   return data;
 }
 
+
+async function loadAssetManifest() {
+  try {
+    const response = await fetch("/assets/asset-manifest.json", { cache: "no-store" });
+    if (!response.ok) return;
+    const manifest = await response.json();
+    state.assetManifest = mergeManifest(FALLBACK_ASSET_MANIFEST, manifest);
+    render();
+  } catch {
+    state.assetManifest = FALLBACK_ASSET_MANIFEST;
+  }
+}
+
+function mergeManifest(base, incoming) {
+  return {
+    ...base,
+    ...incoming,
+    models: { ...(base.models || {}), ...(incoming.models || {}) },
+    gui: { ...(base.gui || {}), ...(incoming.gui || {}) },
+    minigames: { ...(base.minigames || {}), ...(incoming.minigames || {}) },
+  };
+}
+
+function safeClass(value) {
+  return String(value || "default").replace(/[^a-z0-9_-]/gi, "-").toLowerCase();
+}
+
+function modelItems(category) {
+  return state.assetManifest?.models?.[category] || [];
+}
+
+function modelById(category, id) {
+  return modelItems(category).find((item) => item.id === id) || { id, name: id, src: "" };
+}
+
 function setName(value) {
   state.name = value;
   localStorage.setItem("tcCrewName", value);
@@ -66,7 +131,7 @@ function connectStream(code) {
   state.stream.onmessage = (event) => {
     state.room = JSON.parse(event.data);
     state.code = state.room.code;
-    localStorage.setItem("tcV03RoomCode", state.code);
+    localStorage.setItem("tcV04RoomCode", state.code);
     render();
   };
   state.stream.onerror = () => {
@@ -81,8 +146,8 @@ async function createRoom() {
     state.room = data.room;
     state.playerId = data.playerId;
     state.code = data.code;
-    localStorage.setItem("tcV03PlayerId", state.playerId);
-    localStorage.setItem("tcV03RoomCode", state.code);
+    localStorage.setItem("tcV04PlayerId", state.playerId);
+    localStorage.setItem("tcV04RoomCode", state.code);
     connectStream(state.code);
     render();
   } catch (error) {
@@ -99,8 +164,8 @@ async function joinRoom() {
     state.room = data.room;
     state.playerId = data.playerId;
     state.code = data.code;
-    localStorage.setItem("tcV03PlayerId", state.playerId);
-    localStorage.setItem("tcV03RoomCode", state.code);
+    localStorage.setItem("tcV04PlayerId", state.playerId);
+    localStorage.setItem("tcV04RoomCode", state.code);
     connectStream(state.code);
     render();
   } catch (error) {
@@ -122,8 +187,8 @@ function leaveRoom() {
   state.room = null;
   state.playerId = "";
   state.code = "";
-  localStorage.removeItem("tcV03PlayerId");
-  localStorage.removeItem("tcV03RoomCode");
+  localStorage.removeItem("tcV04PlayerId");
+  localStorage.removeItem("tcV04RoomCode");
   render();
 }
 
@@ -137,9 +202,9 @@ function renderLanding() {
     <main class="app-shell sky-scene">
       <section class="landing-card toy-gloss">
         <div class="logo-boat" aria-hidden="true"><div class="mini-mast"></div><div class="mini-sail"></div><div class="mini-hull"></div></div>
-        <p class="eyebrow">v0.3 treasure hunt mode</p>
+        <p class="eyebrow">v0.4 asset pipeline + unlocks</p>
         <h1>Treasure Crew Co-op</h1>
-        <p>A two-player cockpit puzzle game. One player runs radio/navigation word tasks while the other repairs the boat with maintenance minigames. Complete both stations to unlock manual pages, then launch a real co-op treasure grid round.</p>
+        <p>A two-player cockpit puzzle game. One player runs radio/navigation word tasks while the other repairs the boat with maintenance minigames. Complete both stations to unlock manual pages, treasure rounds, and cosmetic 3D asset slots for wheels, seats, boats, islands, pirates, and GUI pieces.</p>
         <label class="field-label">Crew name<input id="crewName" value="${escapeHtml(state.name)}" placeholder="Rochelle" /></label>
         <div class="landing-actions">
           <button class="primary-button" id="createRoom">Create Room</button>
@@ -191,6 +256,7 @@ function renderGame() {
           ${room.treasureHunt?.active ? treasureHuntMarkup(room.treasureHunt, mySeat) : ""}
           ${mySeat && task && !room.treasureHunt?.active ? taskMarkup(task, activeRole) : ""}
           ${manualMarkup(room.stats.manualPages)}
+          ${assetLockerMarkup(room, mySeat)}
         </aside>
       </section>
 
@@ -266,10 +332,11 @@ function cockpitMarkup(room, mySeat, captainName, engineerName) {
         ${shifterMarkup()}
       </div>
       <div class="lower-console">
-        ${playerStationMarkup("captain", captainName, mySeat === "captain")}
-        ${wheelMarkup()}
-        ${playerStationMarkup("engineer", engineerName, mySeat === "engineer")}
+        ${playerStationMarkup("captain", captainName, mySeat === "captain", room.cosmetics?.equipped?.captainSeat)}
+        ${wheelMarkup(room.cosmetics?.equipped?.steeringWheel)}
+        ${playerStationMarkup("engineer", engineerName, mySeat === "engineer", room.cosmetics?.equipped?.engineerSeat)}
       </div>
+      ${assetPreviewStripMarkup(room)}
     </section>`;
 }
 
@@ -301,16 +368,18 @@ function shifterMarkup() {
   return `<div class="shifter"><div class="shifter-slot"></div><div class="shifter-arm"></div><div class="shifter-knob"></div></div>`;
 }
 
-function wheelMarkup() {
-  return html`<div class="wheel-wrap"><div class="wheel">${Array.from({ length: 8 }, (_, index) => `<span style="transform: rotate(${index * 45}deg)"></span>`).join("")}<b></b></div><div class="small-gauges">${blankGauge(31)}${blankGauge(74)}</div></div>`;
+function wheelMarkup(wheelId = "wheel-classic") {
+  const wheel = modelById("steeringWheels", wheelId);
+  return html`<div class="wheel-wrap wheel-skin-${safeClass(wheelId)}" title="${escapeHtml(wheel.name)}"><div class="wheel">${Array.from({ length: 8 }, (_, index) => `<span style="transform: rotate(${index * 45}deg)"></span>`).join("")}<b></b></div><div class="small-gauges">${blankGauge(31)}${blankGauge(74)}</div><div class="equipped-tag">${escapeHtml(wheel.name)}</div></div>`;
 }
 
-function playerStationMarkup(role, occupied, active) {
+function playerStationMarkup(role, occupied, active, seatId = "seat-navy") {
   const isCaptain = role === "captain";
   const tablets = isCaptain
     ? tabletMarkup("RADIO", "radio") + tabletMarkup("WORDS", "word") + tabletMarkup("BUILD", "letters")
     : tabletMarkup("SORT", "liquid") + tabletMarkup("DOTS", "dots") + tabletMarkup("MATCH", "match");
-  return html`<div class="player-station ${active ? "active" : ""}"><div class="tablet-row">${tablets}</div><div class="seat-card"><div class="seat-back">⚓</div><div><p class="eyebrow">${ROLE_COPY[role].eyebrow}</p><h3>${ROLE_COPY[role].title}</h3><p>${escapeHtml(occupied || "Open")}</p></div></div></div>`;
+  const seat = modelById("seats", seatId);
+  return html`<div class="player-station seat-skin-${safeClass(seatId)} ${active ? "active" : ""}" title="${escapeHtml(seat.name)}"><div class="tablet-row">${tablets}</div><div class="seat-card"><div class="seat-back">⚓</div><div><p class="eyebrow">${ROLE_COPY[role].eyebrow}</p><h3>${ROLE_COPY[role].title}</h3><p>${escapeHtml(occupied || "Open")}</p><small>${escapeHtml(seat.name)}</small></div></div></div>`;
 }
 
 function tabletMarkup(title, visual) {
@@ -349,6 +418,7 @@ function revealMarkup(reveal) {
     <h2>${escapeHtml(reveal.title)}</h2>
     <p>${escapeHtml(reveal.body)}</p>
     <div class="clue-strip">${escapeHtml(reveal.clue)}</div>
+    ${unlockRevealMarkup(reveal.unlocks || [])}
     <button class="primary-button" data-action="reveal:clear">Add to Manual</button>
   </section></div>`;
 }
@@ -406,6 +476,87 @@ function treasureHuntMarkup(hunt, mySeat) {
   </section>`;
 }
 
+
+function unlockRevealMarkup(unlocks = []) {
+  if (!unlocks.length) return "";
+  return `<div class="unlock-reveal"><p class="eyebrow">new cosmetic unlock</p>${unlocks.map((item) => `<span>${escapeHtml(item.name)}</span>`).join("")}</div>`;
+}
+
+function assetPreviewStripMarkup(room) {
+  const equipped = room.cosmetics?.equipped || {};
+  const items = [
+    ["boat", modelById("boats", equipped.boat || "boat-glossy-sloop")],
+    ["wheel", modelById("steeringWheels", equipped.steeringWheel || "wheel-classic")],
+    ["captain seat", modelById("seats", equipped.captainSeat || "seat-navy")],
+    ["engineer seat", modelById("seats", equipped.engineerSeat || "seat-navy")],
+  ];
+  return `<div class="asset-preview-strip">${items.map(([label, item]) => `<div class="asset-pill"><span>${label}</span><strong>${escapeHtml(item.name || item.id)}</strong></div>`).join("")}</div>`;
+}
+
+function assetLockerMarkup(room, mySeat) {
+  const cosmetics = room.cosmetics || { unlocked: {}, equipped: {} };
+  const gui = state.assetManifest?.gui || {};
+  return html`<section class="asset-locker">
+    <div class="asset-locker-head">
+      <p class="eyebrow">asset locker v0.4</p>
+      <h3>3D Models + GUI Assets</h3>
+      <p>Drop GLB models into <code>public/assets/models</code>, then update the manifest. Unlocked wheels and seats can be equipped live by room.</p>
+    </div>
+    <div class="gui-asset-row">
+      ${Object.entries(gui).map(([name, src]) => `<span><img src="/${src}" alt="${escapeHtml(name)}" />${escapeHtml(name)}</span>`).join("")}
+    </div>
+    <div class="cosmetic-groups">
+      ${cosmeticGroupMarkup("steeringWheels", "Steering Wheels", cosmetics.unlocked?.steeringWheels || [], cosmetics.equipped?.steeringWheel)}
+      ${cosmeticGroupMarkup("seats", "Captain Seat", cosmetics.unlocked?.seats || [], cosmetics.equipped?.captainSeat, "captain")}
+      ${cosmeticGroupMarkup("seats", "Engineer Seat", cosmetics.unlocked?.seats || [], cosmetics.equipped?.engineerSeat, "engineer")}
+    </div>
+    <details class="model-intake"><summary>Model intake checklist</summary>${modelIntakeMarkup()}</details>
+  </section>`;
+}
+
+function cosmeticGroupMarkup(category, title, unlockedIds, equippedId, target = "") {
+  const items = modelItems(category);
+  return `<div class="cosmetic-group"><h4>${title}</h4>${items.map((item) => {
+    const unlocked = unlockedIds.includes(item.id);
+    const equipped = equippedId === item.id;
+    const src = item.src || "";
+    return `<button class="cosmetic-card ${equipped ? "equipped" : ""}" data-equip-category="${category}" data-equip-id="${item.id}" data-equip-target="${target}" ${unlocked ? "" : "disabled"}>
+      <span class="mini-model-preview ${src ? "has-model" : "fallback"}">${src ? modelViewerMarkup(src, item.name) : previewIcon(category, item.id)}</span>
+      <strong>${escapeHtml(item.name || item.id)}</strong>
+      <small>${equipped ? "Equipped" : unlocked ? "Unlocked" : `Unlock page ${item.unlockAtManualPages ?? "?"}`}</small>
+    </button>`;
+  }).join("")}</div>`;
+}
+
+function modelViewerMarkup(src, label) {
+  const safeSrc = src.startsWith("/") ? src : `/${src}`;
+  return `<model-viewer src="${escapeHtml(safeSrc)}" camera-controls auto-rotate disable-zoom interaction-prompt="none" ar-status="not-presenting" alt="${escapeHtml(label || "3D model")}"></model-viewer>`;
+}
+
+function previewIcon(category, id) {
+  if (category === "steeringWheels") return "☸";
+  if (category === "seats") return "💺";
+  if (String(id).includes("pirate")) return "☠️";
+  return "⬡";
+}
+
+function modelIntakeMarkup() {
+  const sections = [
+    ["players", "Player avatars and floating heads"],
+    ["pirates", "Pirate enemies and NPCs"],
+    ["boats", "Player boat and pirate ships"],
+    ["islands", "Treasure islands and destinations"],
+    ["environments", "Cockpit, ocean, sky, and island environments"],
+    ["steeringWheels", "Unlockable steering wheel cosmetics"],
+    ["seats", "Unlockable player seat cosmetics"],
+  ];
+  return `<div class="model-intake-grid">${sections.map(([key, label]) => {
+    const items = modelItems(key);
+    const ready = items.filter((item) => item.src).length;
+    return `<div><strong>${label}</strong><span>${ready}/${items.length} manifest slots point to model files</span><code>assets/models/${key.replace("steeringWheels", "steering-wheels")}</code></div>`;
+  }).join("")}</div>`;
+}
+
 function bindGameEvents() {
   document.querySelectorAll("[data-action='mission:start']").forEach((button) => button.addEventListener("click", () => action("mission:start")));
   document.querySelectorAll("[data-action='seat:claim']").forEach((button) => button.addEventListener("click", () => action("seat:claim", { seat: button.dataset.seat })));
@@ -418,6 +569,7 @@ function bindGameEvents() {
   document.querySelectorAll("[data-local='leave']").forEach((button) => button.addEventListener("click", leaveRoom));
   document.querySelectorAll("[data-switch]").forEach((button) => button.addEventListener("click", () => action("switch:toggle", { id: button.dataset.switch })));
   document.querySelectorAll("[data-event]").forEach((button) => button.addEventListener("click", () => action("event:trigger", { id: button.dataset.event })));
+  document.querySelectorAll("[data-equip-category]").forEach((button) => button.addEventListener("click", () => action("cosmetic:equip", { category: button.dataset.equipCategory, id: button.dataset.equipId, target: button.dataset.equipTarget })));
 }
 
 function completeTask(role, note) {
@@ -561,3 +713,4 @@ function shuffle(items) {
 }
 
 render();
+loadAssetManifest();

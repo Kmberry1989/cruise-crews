@@ -1,50 +1,92 @@
-# Treasure Crew Co-op — v0.3 Design Direction
+# Treasure Crew Co-op — v0.4 Design Notes
 
-## Core fantasy
+## Current design direction
 
-Two players are sharing a charming glossy toy-boat cockpit. One player handles communication, words, radio, maps, and navigation. The other handles maintenance, repair, sorting, circuits, matching, and physical cockpit controls. They must talk to each other to keep the boat moving, build the owner's manual, discover treasure, and survive pirate interruptions.
+The game is a mobile-first cooperative nautical party game with a glossy vinyl/toy visual language. The cockpit is the central hub. Two players operate separate responsibility stations and communicate under light pressure.
 
-## Target feel
+## Core player roles
 
-- Glossy vinyl toy world
-- Nautical luxury cockpit
-- Fast, readable mobile controls
-- Cooperative chaos without being stressful
-- Family-friendly puzzle communication
-- Collectible progression through manual pages, treasures, ship parts, seats, wheels, flags, and decorative upgrades
+### Captain / Radio / Navigation
 
-## v0.3 vertical slice
+- Radio phrase decoding
+- Word search
+- Letter-bank word building
+- Treasure clue reading
+- Future: voice/intercom UI, map reading, pirate warning callouts
 
-The first playable slice now includes a real co-op communication event:
+### Engineer / Maintenance
 
-1. Players join a room.
-2. Players claim Captain and Engineer seats.
-3. Mission begins with a drifting boat emergency.
-4. Each player completes one role task.
-5. Manual page reveal appears.
-6. Treasure event unlocks.
-7. Captain receives a map clue.
-8. Engineer receives a blank GPS grid.
-9. Captain calls out the clue verbally.
-10. Engineer taps the coordinate.
-11. Correct coordinate reveals treasure; wrong guesses penalize the boat.
+- Liquid sorting
+- Connect-the-dots circuit repair
+- Matching spare parts
+- Breaker panel recovery
+- Treasure GPS coordinate tapping
+- Future: timed repairs during pirate attacks
 
-## Treasure Hunt Mode rules
+## New v0.4 asset system
 
-- Captain sees the clue and map note.
-- Engineer sees the GPS grid.
-- The target coordinate is hidden in the clue.
-- Hazard coordinates create larger hull/power penalties.
-- Three wrong guesses lose the signal.
-- Success grants treasure, morale, and progression rewards.
+The game now expects an external art pipeline:
 
-## Next features after v0.3
+```text
+public/assets/asset-manifest.json
+```
 
-1. Add **Pirate Attack Mode** with a timed shared chaos loop.
-2. Add QR-code room joining.
-3. Add audio cues: radio static, switch clicks, success chimes, pirate warning bell.
-4. Add mobile vibration/haptic events for red lights and hazards.
-5. Add unlockable steering wheels, seats, cockpit skins, flags, and boat ornaments.
-6. Add persistent save state for unlocked owner's manual pages and treasures.
-7. Add tutorial narrator prompts.
-8. Add full tablet/controller separation: shared cockpit display plus individual player phones.
+The manifest is the single source of truth for model and GUI asset ids.
+
+### Model categories
+
+- players
+- pirates
+- boats
+- islands
+- environments
+- steeringWheels
+- seats
+
+### GUI categories
+
+- coin
+- pearl
+- gem
+- berry
+- pirateFlag
+- radioWave
+
+### Minigame asset categories
+
+- word tile frames
+- liquid tubes
+- treasure X markers
+- future pirate/defense assets
+
+## Cosmetic unlock rules
+
+Manual pages unlock cosmetics:
+
+| Manual Page | Unlock |
+|---:|---|
+| 0 | Classic Toy Wheel + Navy Captain Chair |
+| 1 | Royal Brass Wheel |
+| 2 | Cloud Cream Chair |
+| 3 | Pirate Bone Wheel |
+| 4 | Pirate Red Chair |
+| 5 | Brown Pirate Ship |
+| 6 | Berry Cove Island |
+
+## Why this is the right next layer
+
+The project is moving from system prototype to content pipeline. The next major risk is not networking anymore; it is whether real art assets can be dropped in, named, unlocked, equipped, and previewed without rewriting the game.
+
+v0.4 establishes that foundation.
+
+## v0.5 recommendation
+
+Build a full 3D Hangar mode:
+
+1. Select player model.
+2. Select boat model.
+3. Select steering wheel and seat cosmetics.
+4. Preview pirates and islands.
+5. Use selected assets inside treasure and pirate modes.
+6. Add QR-code room join.
+7. Replace emoji/minimal SVG minigame icons with final GUI artwork.

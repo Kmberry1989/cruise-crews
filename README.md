@@ -1,68 +1,122 @@
-# Treasure Crew Co-op v0.3
+# Treasure Crew Co-op v0.4
 
-A mobile-first multiplayer web prototype for the glossy toy-boat cooperative cockpit game. Two players join a room code, choose seats, complete asymmetric cockpit minigames, build the owner's manual, and now launch a real co-op treasure-hunt communication round.
+A mobile-first cooperative cockpit web game prototype with a new **asset pipeline and cosmetic unlock system**.
 
-This v0.3 update adds the first true social gameplay mode: **Captain reads the treasure map clue while Engineer taps the GPS grid coordinate.**
+Two players join the same room code, choose Captain or Engineer seats, complete asymmetric cockpit minigames, unlock owner’s manual pages, launch treasure hunts, and now unlock/equip alternate steering wheels and player seats.
 
-## New in v0.3
+## New in v0.4
 
-- Interactive **Treasure Hunt Mode**
-- Captain-only map clue panel
-- Engineer GPS coordinate tapping grid
-- Wrong-coordinate penalties
-- Hazard squares that damage hull/power more severely
-- Treasure success reward reveal
-- Failed hunt state with relaunch option
-- Event overlay button to launch the treasure round
-- Live multiplayer sync for treasure guesses
-- Updated logs and success feedback for treasure actions
-- Kept v0.2 guided mission flow and manual unlocks
-- Still no external npm packages required
-
-## Existing features
-
-- Room-code multiplayer
-- Captain and Engineer seats
-- Seat swapping during gameplay
-- Guided mission banner
-- Breaker panel with red warning lights
-- Blank gauges/meters, GPS screen, shifter, wheel, radio handset, and coil cord
-- Captain minigames: word search and letter-bank word building
-- Engineer minigames: liquid sorting, connect-the-dots, and matching repairs
-- Owner's manual reveal overlays
-- Pirate event tease for the next build
-
-## Install
-
-No external packages are required. This command is optional but safe:
-
-```bash
-npm install
-```
+- Added an **Asset Locker** inside the player touchscreen panel.
+- Added a 3D model intake folder structure for:
+  - player models
+  - pirates
+  - boats
+  - islands
+  - environments
+  - steering wheels
+  - player seats
+- Added `public/assets/asset-manifest.json` for mapping real GLB/GLTF and GUI assets into the game.
+- Added unlockable steering wheels:
+  - Classic Toy Wheel
+  - Royal Brass Wheel
+  - Pirate Bone Wheel
+- Added unlockable player seats:
+  - Navy Captain Chair
+  - Cloud Cream Chair
+  - Pirate Red Chair
+- Added multiplayer-synced cosmetic equipping.
+- Added real SVG GUI/minigame asset examples:
+  - coin
+  - pearl
+  - gem
+  - wild berries
+  - pirate flag
+  - radio wave
+  - word tile frame
+  - liquid tube
+  - treasure X
+- Added visual equipped tags in the cockpit.
+- Added model-viewer support for GLB previews when model files are added.
+- Kept dependency-free Node runtime for the server and client app.
 
 ## Run locally
 
 ```bash
+cd treasure-crew-v04
+npm install
 npm run dev
 ```
 
-Open:
+Then open:
 
 ```text
 http://localhost:3001
 ```
 
-Open the same URL in two browser tabs or on two devices. Create a room on one device, then join with the room code on the other.
+Open it in two browser tabs or two mobile devices. Create a room on one device, then join from the other.
 
-## Production run
+## Add your real 3D models
 
-```bash
-npm start
+Drop model files into:
+
+```text
+public/assets/models/players/
+public/assets/models/pirates/
+public/assets/models/boats/
+public/assets/models/islands/
+public/assets/models/environments/
+public/assets/models/steering-wheels/
+public/assets/models/seats/
 ```
 
-## Hosting
+Then update:
 
-Use a Node-capable host because multiplayer sync requires a persistent server process.
+```text
+public/assets/asset-manifest.json
+```
+
+Example:
+
+```json
+{
+  "id": "wheel-brass",
+  "name": "Royal Brass Wheel",
+  "src": "assets/models/steering-wheels/wheel-brass.glb",
+  "thumbnail": "",
+  "unlockAtManualPages": 1
+}
+```
+
+The app will preview `.glb` assets in the Asset Locker when the files exist.
+
+## Add real GUI and minigame assets
+
+Put SVG/PNG/WebP files into:
+
+```text
+public/assets/gui/
+public/assets/minigames/word/
+public/assets/minigames/maintenance/
+public/assets/minigames/treasure/
+public/assets/minigames/pirate/
+```
+
+Then map them in `asset-manifest.json`.
+
+## Suggested export settings for Blender / glTF
+
+- Format: `.glb`
+- Apply transforms before export
+- Put origin at the useful pivot point
+- Keep real-world scale consistent across props
+- Use low/medium poly toy-like models for mobile
+- Prefer baked/simple PBR materials
+- Embed textures when possible
+- Keep filenames lowercase with hyphens
+
+## Host it
+
+Use a Node-capable host because multiplayer uses Server-Sent Events.
 
 Good options:
 
@@ -70,7 +124,7 @@ Good options:
 - Railway
 - Fly.io
 - DigitalOcean App Platform
-- VPS / self-hosted Node server
+- VPS
 
 Suggested settings:
 
@@ -80,31 +134,26 @@ Start command: npm start
 Node version: 20+
 ```
 
-## Files
+## Project structure
 
 ```text
-server.js            Node static server + room server + mission + treasure engine
-public/index.html    App shell
-public/app.js        Multiplayer client, rendering, task UI, treasure mode, overlays
-public/styles.css    Glossy toy cockpit visual system
-GAME_DESIGN.md       Current game design direction and next features
+server.js                         Node multiplayer server
+public/index.html                 App shell
+public/app.js                     Multiplayer client/game UI/minigames
+public/styles.css                 Glossy toy cockpit styling
+public/assets/asset-manifest.json Asset registry
+public/assets/models/             3D model drop zone
+public/assets/gui/                GUI asset library
+public/assets/minigames/          Minigame asset library
 ```
-
-## v0.3 test path
-
-1. Create a room.
-2. Join from a second tab or device.
-3. Claim Captain and Engineer.
-4. Press **Start Voyage**.
-5. Complete one Captain task and one Engineer task.
-6. Add the owner’s manual page.
-7. When the treasure event appears, press **Launch Treasure Round**.
-8. Captain reads the clue aloud.
-9. Engineer taps the GPS coordinate.
-10. Correct guesses unlock treasure; wrong guesses damage the boat.
 
 ## Next recommended build
 
-**v0.4 — Pirate Attack Mode**
+v0.5 should convert the Asset Locker into a true **3D hangar/gallery** with:
 
-Add a timed arcade event where both players defend the boat through rapid symbol matching, repair prompts, breaker callouts, and playful pirate pressure.
+- full-screen model preview
+- rotate/zoom inspection
+- per-player avatar selection
+- boat/island selection before treasure mode
+- pirate model use during Pirate Attack Mode
+- actual GUI asset replacement inside minigames
